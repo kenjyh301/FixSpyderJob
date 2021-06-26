@@ -7,12 +7,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SendStatusSCHJob {
-//    @Autowired
-//    StatusSCHService statusSCHService;
+    @Autowired
+    StatusSCHService statusSCHService;
 
-//    @Scheduled(fixedDelayString = "5000")
-//    public void execute(){
-//        statusSCHService.SendStatusSCH();
-//    }
+    @Scheduled(fixedDelayString = "5000")
+    public void execute(){
+        statusSCHService.SendStatusSCH();
+    }
 
 }
