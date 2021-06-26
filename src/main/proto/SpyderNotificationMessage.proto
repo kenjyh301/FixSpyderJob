@@ -1,0 +1,297 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "minh.project.message";
+option java_outer_classname = "SpyderNotificationMessageProto";
+
+service SpyderNotificationService {
+	//using for module DataConverter send msg to DataCollection msg
+	rpc sendNotificationFromSpyderMessage(SpyderNotifyFromWeaponMessage)
+        returns(google.protobuf.Empty) {}
+
+	//using for module external want to get msg from module DataCollection
+	rpc getAllSpyderNotificationMessage(google.protobuf.Empty) 
+        returns (stream SpyderNotifyFromWeaponMessage) {}
+
+	//using for module System send msg to DataEncode msg
+	rpc sendNotificationToSpyderMessage(SpyderNotifyToWeaponMessage)
+        returns(google.protobuf.Empty) {}
+	
+}
+
+message SpyderNotifyFromWeaponMessage {	//Thong bao gui tu khi' tai` den SCH
+
+    enum msgIdentify{
+    	UNKNOWN = 0;			//Khong xac dinh thong bao
+    	KILLZONE = 1;			//Thong bao vung tieu diet
+    	ACCEPTCOMMAND = 2;		//Chap nhan thong bao chi huy
+    	STATUS_dTLPK = 3;		//Trang thai dTLPK
+    	INFO_CCU = 4;			//Thong tin xe CCU
+    	INFO_MFU = 5;			//Thong tin cac xe MFU
+    	INFO_RADAR = 6;			//Thong tin dai ra da
+    }
+    
+    string sourceName = 1; 				// use to identity data source 
+    msgIdentify msgId = 2;					//La so tu nhien tang dan`
+    
+    int32 userId = 3;						//user id
+    double time = 4;			    		//updated time
+
+    oneof msg_f {
+	SpyderKillZone killZone = 5;
+	SpyderAcceptCommand acceptCommand= 6;
+	SpyderStatusdTLPK statusdTLPK = 7;
+	SpyderInformationCCU infoCCU = 8;
+	SpyderInformationRadar infoRadar = 9;
+    }
+    repeated SpyderInformationMFU infoMFU = 10;
+}
+
+message SpyderNotifyToWeaponMessage {	//Thong bao gui tu` so chi huy den' khi' tai`
+
+    enum msgIdentify{
+    	UNKNOWN = 0;					//Khong xac dinh thong bao
+    	PERMISSION_FIRE = 1;			//Lenh cho phep ban
+    	AREA_DEFENSE = 2;				//Thong bao khu vuc bao ve
+    	TARGET_MONITOR = 3;				//Thong bao giam sat muc tieu
+    	TARGET_MONITOR_CANCEL = 4;		//Thong bao huy giam' sat' muc tieu
+    	TARGET_ASSIGNMENT = 5;			//Thong bao chi thi muc tieu
+    	TARGET_ASSIGNMENT_CANCEL = 6;	//Thong bao huy chi thi muc tieu
+    	CHANGE_STATE_FIGHT = 7;			//Thay doi trang thai san sang chien dau
+		STATUS_SCH = 8;					//Thong bao trang thai cua SCH
+    }
+    string sourceName = 1; 				// use to identity data source 
+    msgIdentify msgId = 2;
+    
+    SpyderNotifySourceId schId = 3;			//id của sở chỉ huy
+    double time = 4;			    		//updated time - giay
+
+    oneof msg_f {
+	SpyderPermissionFire permissionFire = 5;
+	SpyderAreaDefense areaDefense = 6;
+	SpyderCommandRelateToTarget commandRelateTarget = 7;
+	SpyderChangeState changeState = 8;
+	SpyderSchStatus schStatus = 9;
+    }
+}
+
+message SpyderKillZone {
+    WGS84Coordinate wgs84Position = 1;			//Vi trong trong toa do WGS84 - don vi do^.
+    oneof radius_f{int32 radius = 2;}			//Ban kinh vung tieu diet - km
+    oneof startAngle_f {int32 startAngle = 3;}	//Goc bat' dau` cua vung` tieu diet - don vi do^.
+    oneof endAngle_f {int32 endAngle = 4;}		//Goc ket thuc cua vung tieu diet - don vi do^.
+    AreaStatus areaStatus = 5;					//Trang thai' vung` tieu diet
+}
+
+message SpyderAcceptCommand {
+    oneof cmdSequence_f {CommandSequence cmdSequence = 1;}				//số hiệu tuần tự: tương ứng số lần gửi lại 1 lệnh liên tiếp: 0 -7
+}
+
+message SpyderStatusdTLPK {
+    TerminalType terminalType  = 1;					
+    repeated WeaponAvailable weaponAvailable = 2;
+    TerminalStatus terminalStatus = 3;
+    StateFightReady stateFightReady = 4;
+}
+
+message SpyderInformationCCU {
+    enum CCU_WORKINGMODE{
+      CCU_SUBSTITUTE = 0;		//du phong`
+      CCU_FIGHTING = 1;			//chien dau'
+      CCU_TRAINING = 2;			//huan luyen
+
+    }
+    enum SHOOTING_STATUS{
+      SS_SUBSTITUTE = 0;		//du phong`
+      SS_READINESS = 1;			//san sang`
+      SS_UNREADINESS = 2;		//khong san sang`
+    }
+    enum CCU_STATUS{
+      CCU_STATUS_SUBSTITUTE = 0;//du phong`
+      CCS_STATUS_GOOD = 1;		//Tot'
+      CCU_STATUS_BAD = 2;		//Loi~
+      CCU_STATUS_DIE = 3;  		//Hong?  
+    }
+   
+    oneof ccuMode_f{CCU_WORKINGMODE ccuMode = 1;}
+    oneof shootingStatus_f{SHOOTING_STATUS shootingStatus = 5;}
+    oneof ccuStatus_f{CCU_STATUS ccuStatus = 6;}
+
+    oneof latitude_f{ double latitude = 7;}		//vi~ do: toa do WGS84
+    oneof longitude_f{ double longitude = 8;}	//kinh do: toa do WGS84
+    oneof altitude_f{ double altitude = 9;}		//do cao khi tai`
+}
+
+message SpyderInformationMFU {
+    enum MFUTYPE {								//loai ten^ lua
+      TYPE_NULL = 0;
+      SR = 1; //short range
+      MR = 2; //medium range
+    }
+
+    enum MFU_STATUS{							//trang thai lam viec
+      MFU_STATUS_SUBSTITUTE = 0;				//du phong`
+      MFU_STATUS_GOOD = 1;						//tot'
+      MFU_STATUS_BAD = 2;						//Loi~
+      MFU_STATUS_DIE = 3;						//Hong?
+      MFU_STATUS_DISCONNECT = 4;				//Khong ket noi
+    }
+
+    enum MFU_WORKINGMODE {						//che do lam viec
+      MFU_SUBSTITUTE = 0;						//du phong`
+      MFU_BAD = 1;								//Loi~
+      MFU_READY = 2; //on launcher				//san sang`
+      MFU_SAFE = 3;								//an toan`
+    }
+
+    oneof mfuId_f {int32 mfuId = 1;}//MFU ID code (example 0-6)
+    oneof type_f{MFUTYPE type = 2;}//SR, MR
+    oneof status_f{MFU_STATUS status = 3;}
+    oneof mfuMode_f{MFU_WORKINGMODE mfuMode = 4;}//
+    oneof missileP_f {int32 missileP = 5;} 		//so ten lua loai P
+    oneof missileD_f {int32 missileD = 6;} 		//so ten lua loai D
+    oneof latitude_f{ double latitude = 7;}		//vi do
+    oneof longitude_f{ double longitude = 8;}	//kinh do
+    oneof altitude_f{ double altitude = 9;}		//do cao
+}
+
+message SpyderInformationRadar {
+    enum RADAR_WORKINGMODE{						//chế độ hoạt động của ra đa
+    	RADAR_SUBSTITUTE = 0;					//dự phòng
+		RADAR_FIGHTING = 1;						//Chiến đấu
+		
+		RADAR_TRAINING = 2;						//Huấn luyện
+    }
+
+    enum RADAR_STATUS{							//trạng thái của đài ra đa
+	RADAR_STATUS_SUBSTITUTE = 0;				//dự phòng
+	RADAR_STATUS_GOOD = 1;						//Tốt
+	RADAR_STATUS_BAD = 2;						//Lỗi
+	RADAR_STATUS_DIE = 3;						//Hỏng
+   }
+
+    oneof radarMode_f{RADAR_WORKINGMODE radarMode = 1;}
+    oneof radarStatus_f{RADAR_STATUS radarStatus = 2;}
+
+    oneof latitude_f{ double latitude = 3;}		//vĩ độ
+    oneof longitude_f{ double longitude = 4;}	//kinh độ
+    oneof altitude_f{ double altitude = 5;}		//độ cao khí tài
+}
+
+//////////////////////////////////////////////////
+
+message SpyderPermissionFire {
+    oneof firePermission_f{ bool firePermission = 1;}		//cho phép bắn - 0: không cho phép bắn - 1: cho phép bắn
+    oneof cmdSequence_f {CommandSequence cmdSequence = 2;}	//số hiệu tuần tự: tương ứng số lần gửi lại 1 lệnh liên tiếp: 0 -7
+}
+
+message SpyderAreaDefense {
+    WGS84Coordinate wgs84Position = 1;					//tọa độ WGS84
+    AreaName areaName = 2;								//tên khu vực bảo vệ
+    AreaStatus areaStatus = 3;							//trạng thái khu vực bảo vệ
+    oneof radius_f {int32 radius = 4;}					//bán kính khu vực bảo vệ
+    repeated WGS84Coordinate pointsOfPolygon = 5;
+}
+
+message SpyderCommandRelateToTarget {
+//include:  / SpyderTargetMonitor / SpyderTargetMonitorCancel / SpyderTargetAssignment / SpyderTargetAssignmentCancel
+    oneof trackNumber_f {int32 trackNumber = 1;}		//số hiệu quỹ đạo
+    oneof cmdSequence_f {CommandSequence cmdSequence = 2;}	//số hiệu tuần tự: tương ứng số lần gửi lại 1 lệnh liên tiếp: 0 -7
+
+    oneof targetAirNumber_f {int64 targetAirNumber = 3;}
+}
+
+message SpyderChangeState {
+    StateFightReady stateFightReady = 1;				//trạng thái chiến đấu
+}
+
+message SpyderSchStatus {
+    oneof centralStatus_f {int32 centralStatus = 1;}	//trạng thái sở chỉ huy
+    StateFightReady stateFightReady = 2;				//trạng thái chiến đấu
+}
+
+
+/////////////////////////////////////////////////////////////////////
+
+message SpyderNotifySourceId{
+    oneof sac_f{int32 sac = 1;}
+    oneof sic_f{int32 sic = 2;}
+}
+
+message AreaName{
+    oneof centralId_f{int32 centralId = 1;}//ascii code (example 0-9)
+    oneof areaId_f{int32 areaId = 2;}//binary code  = [1,99]
+}
+
+message AreaStatus{
+    oneof priority_f{int32 priority = 1;}//value=[0,7]
+    oneof status_f{bool status = 2;}//value=0|1|		//0: không cần bảo vệ - 1: cần bảo vệ
+    oneof delete_f{bool delete = 3;}//value=0|1|		//0: không xóa - 1: xóa
+}
+
+message WGS84Coordinate{
+    oneof latitude_f{ double latitude = 1;}				//vĩ độ	
+    oneof longitude_f{ double longitude = 2;}			//kinh độ
+}
+
+message CommandSequence
+{
+    oneof commandId_f{int32 commandId = 1;}//serial		//số hiệu tuần tự (0-31)
+    oneof resent_f {int32 resent = 2;}					//bộ đếm số lần truyền lại (0-7)
+}
+
+message WeaponAvailable
+{
+    oneof id_f {int32 id = 1;}							//id của vũ khí (0-127)
+    oneof remain_f{int32 remain = 2;}//					//số lượng vũ khí còn lại (0-255)
+}
+
+message TerminalStatus											//trạng thái dTLPK
+{
+    oneof readiness_f {int32 readiness = 1;}					//0: thụ động; 1: tích cực
+    oneof fightingPermission_f {int32 fightingPermission = 2;}	//0: không cho phép bắn; 1: cho phép bắn	
+    oneof statusChanged_f {bool statusChanged = 3;}	//0 | 1		//0: không thay đổi trạng thái - 1: thay đổi trạng thái
+//    oneof readinessLevel_f {int32 readinessLevel = 4;}//value=[1,5]
+}
+
+message TerminalType											//kiểu dTLPK
+{
+    oneof type_f {int32 type = 1;}								//0=không có thông tin; 1=SAM; 2=AAA; 3=ESM; 4=FightingAircraft- phi đội tiêm kích;
+    oneof subtype_f {int32 subtype = 2;}						//0=không có thông tin; 1-7: phân loại
+}
+
+message StateFightReady
+{
+    enum FIGHT_LEVEL {											//Cấp chiến đấu
+	FIGHT_LEVEL1 = 0;											//Cấp 1 chiến đấu
+	DEFENSE_AIRCRAFT = 1;										//Cấp 1 bảo vệ chuyên cơ
+	TRAIN_LEVEL1 = 2;											//Cấp 1 luyện tập
+	FIGHT_LEVEL2 = 3;											//Cấp 2
+	LEVEL_RESERVE = 4;  										// 
+    }
+
+    enum STATE_FIGHT_READY {									//Trạng thái sẵn sàng chiến đấu
+	REGULAR = 0;												//Thường xuyên
+	INTENSIFY = 1;												//Tăng cường
+	HIGHT = 2;													//Cao
+	ALL = 3;													//Toàn bộ
+	RESERVE = 4;
+    }
+
+    oneof level_f{FIGHT_LEVEL level = 1;}
+    oneof state_f{STATE_FIGHT_READY state = 2;}
+}
+
+
+
+
+
+
+
+
+
+
+
+
